@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Steve Oakes — Sales Toolkit</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFF;--surface2:#F0EEE9;--surface3:#E8E6E0;
+  --border:rgba(0,0,0,0.09);--border-mid:rgba(0,0,0,0.14);
+  --text:#1A1A18;--text2:#5C5B57;--text3:#9A9891;
+  --accent:#1D5FA8;--accent-bg:#EBF2FB;
+  --warn:#993C1D;--warn-bg:#FAECE7;
+  --success:#3B6D11;--success-bg:#EAF3DE;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --purple:#5B2D8E;--purple-bg:#F0EAF9;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 4px rgba(0,0,0,0.07);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow)}
+.hdr-name{font-size:15px;font-weight:700;color:var(--text)}
+.hdr-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.hdr-badge{font-size:11px;background:var(--accent-bg);color:var(--accent);padding:4px 10px;border-radius:20px;font-weight:600}
+
+/* WINS BANNER */
+.wins-banner{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;gap:16px;overflow-x:auto;scrollbar-width:none}
+.wins-banner::-webkit-scrollbar{display:none}
+.win-stat{display:flex;flex-direction:column;align-items:center;min-width:72px}
+.win-stat .wv{font-size:22px;font-weight:700;color:var(--accent);line-height:1}
+.win-stat .wl{font-size:10px;color:var(--text3);margin-top:2px;text-align:center;white-space:nowrap}
+
+/* TABS */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 8px;overflow-x:auto;scrollbar-width:none;position:sticky;top:57px;z-index:100}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:11px 13px;font-size:13px;font-weight:500;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;transition:color .15s}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--text2)}
+
+/* MAIN */
+.main{max-width:740px;margin:0 auto;padding:18px 14px 90px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px}
+.stat-box .sl{font-size:11px;color:var(--text3);margin-bottom:3px}
+.stat-box .sv{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.stat-box .ss{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* FORMS */
+.fl{font-size:13px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+textarea,input[type=date],input[type=number],input[type=text],select{width:100%;font-family:inherit;font-size:15px;padding:11px 12px;border:1px solid var(--border-mid);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+textarea:focus,input:focus,select:focus{border-color:var(--accent);background:var(--surface)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.fg{margin-bottom:12px}
+.frow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.frow input[type=date]{flex:1;min-width:130px}
+.frow input[type=number]{width:70px}
+.frow label{font-size:13px;color:var(--text2);white-space:nowrap}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;font-size:15px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border-mid);background:var(--surface);color:var(--text);white-space:nowrap;min-height:46px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:background .12s}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-sm{padding:7px 13px;font-size:13px;min-height:34px}
+.btn-full{width:100%;margin-top:6px}
+
+/* PILLS */
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-good{background:var(--success-bg);color:var(--success)}
+.p-info{background:var(--accent-bg);color:var(--accent)}
+.p-amber{background:var(--amber-bg);color:var(--amber)}
+.p-purple{background:var(--purple-bg);color:var(--purple)}
+
+/* ENTRIES */
+.entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.emeta{font-size:12px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.esumm{font-size:13px;color:var(--text);line-height:1.55;margin-bottom:6px}
+.esec{margin-top:9px;padding-top:9px;border-top:1px solid var(--border)}
+.esec-l{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.esec-b{font-size:13px;color:var(--text2);line-height:1.55}
+
+/* TIP */
+.tip{background:var(--accent-bg);border:1px solid rgba(29,95,168,.15);border-radius:var(--radius-sm);padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--accent);line-height:1.5;display:flex;gap:10px}
+
+/* PROCESSING */
+.proc{font-size:13px;color:var(--text3);padding:10px 0;display:none;align-items:center;gap:8px}
+.spin{width:16px;height:16px;border:2px solid var(--border-mid);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{display:none;color:var(--warn);font-size:13px;margin-top:8px;padding:8px 12px;background:var(--warn-bg);border-radius:var(--radius-sm)}
+
+/* EMPTY */
+.empty{text-align:center;padding:34px 16px;color:var(--text3);font-size:14px;border:1px dashed var(--border-mid);border-radius:var(--radius)}
+.empty-icon{font-size:26px;display:block;margin-bottom:8px}
+
+/* SECTION HDR */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-size:15px;font-weight:600;color:var(--text)}
+
+/* DIVIDER */
+.div{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* UPDATE */
+.u-subj{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.u-sec{margin-bottom:14px}
+.u-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.u-body{font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.act-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.chart-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.chart-wrap{position:relative;height:180px}
+@media(max-width:520px){.chart-grid{grid-template-columns:1fr}.chart-wrap{height:160px}}
+
+/* FOLLOWUP LIST */
+.fu-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px}
+.fu-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:6px}
+.fu-dot.overdue{background:var(--warn)}
+.fu-content .fu-yard{font-size:14px;font-weight:600;color:var(--text)}
+.fu-content .fu-action{font-size:13px;color:var(--text2);margin-top:2px}
+.fu-content .fu-date{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* BACKUP LIST */
+.bk-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bk-date{font-size:14px;font-weight:600;color:var(--text)}
+.bk-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.bk-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* PROPOSAL */
+.prop-out{white-space:pre-wrap;font-size:14px;color:var(--text);line-height:1.8}
+
+/* PRINT */
+@media print{
+  .hdr,.tab-bar,.wins-banner,.btn,.act-row{display:none!important}
+  .tab-panel{display:block!important}
+  .card{box-shadow:none;border:1px solid #ccc}
+}
+
+@media(max-width:480px){
+  .stat-grid{gap:8px}
+  .stat-box .sv{font-size:19px}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div><div class="hdr-name">Steve Oakes</div><div class="hdr-sub">Sales Toolkit</div></div>
+  <div class="hdr-badge">My Toolkit</div>
+</header>
+
+<!-- WINS SCOREBOARD -->
+<div class="wins-banner" id="wins-banner">
+  <div class="win-stat"><div class="wv" id="wb-days">0</div><div class="wl">Days logged</div></div>
+  <div class="win-stat"><div class="wv" id="wb-orders">0</div><div class="wl">Orders closed</div></div>
+  <div class="win-stat"><div class="wv" id="wb-stock">0</div><div class="wl">Stock orders</div></div>
+  <div class="win-stat"><div class="wv" id="wb-conv">0</div><div class="wl">Yards converted</div></div>
+  <div class="win-stat"><div class="wv" id="wb-ff">0</div><div class="wl">FF hrs lost</div></div>
+  <div class="win-stat"><div class="wv" id="wb-risk">0</div><div class="wl">At risk</div></div>
+</div>
+
+<nav class="tab-bar" role="tablist">
+  <button class="tab-btn active" onclick="switchTab('log',this)">📋 Daily Log</button>
+  <button class="tab-btn" onclick="switchTab('orders',this)">📦 Orders</button>
+  <button class="tab-btn" onclick="switchTab('pitches',this)">🎯 Pitches</button>
+  <button class="tab-btn" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('followups',this)">🔔 Follow-ups</button>
+  <button class="tab-btn" onclick="switchTab('update',this)">📤 Weekly Update</button>
+  <button class="tab-btn" onclick="switchTab('proposal',this)">📄 Proposal</button>
+  <button class="tab-btn" onclick="switchTab('backups',this)">🗂 Backups</button>
+</nav>
+
+<main class="main">
+
+<!-- ===== DAILY LOG ===== -->
+<div id="tab-log" class="tab-panel active">
+  <div class="tip">💡 <span><strong>Catching up?</strong> Change the date and type or paste whatever you remember — emails, texts, rough notes all work.</span></div>
+  <div class="card">
+    <div class="fg"><label class="fl" for="e-text">What happened today? Plain language is fine.</label>
+    <textarea id="e-text" placeholder="e.g. Called Martinez — frustrated shipment was wrong again. Spent 2 hrs with warehouse. Closed new order with Hendricks, 40 units. Still tracking late truck for Perez.&#10;&#10;Tip: paste emails or texts and AI pulls out what matters."></textarea></div>
+    <div class="fg"><label class="fl" for="e-note">Notes to self (not included in manager update)</label>
+    <textarea id="e-note" style="min-height:55px;" placeholder="Reminders, ideas, things to follow up on personally…"></textarea></div>
+    <div class="frow">
+      <label>Date</label><input type="date" id="e-date"/>
+      <label>Fire-fighting hrs</label><input type="number" id="e-ff" min="0" max="24" step="0.5" value="0" style="width:68px"/>
+    </div>
+    <button class="btn btn-primary btn-full" id="log-btn" onclick="submitEntry()">+ Log it</button>
+    <div class="proc" id="log-proc"><div class="spin"></div><span>Organizing your entry…</span></div>
+    <div class="err" id="log-err"></div>
+  </div>
+  <div id="log-stats" style="display:none">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sl">Days logged</div><div class="sv" id="ls-days">0</div><div class="ss">entries</div></div>
+      <div class="stat-box"><div class="sl">Fire-fighting</div><div class="sv" id="ls-ff">0</div><div class="ss">hrs not selling</div></div>
+      <div class="stat-box"><div class="sl">At risk</div><div class="sv" id="ls-risk">0</div><div class="ss">accounts</div></div>
+    </div>
+    <div class="sec-hdr"><div class="sec-title">Log entries</div><button class="btn btn-sm" onclick="exportLog()">⬇ Export</button></div>
+  </div>
+  <div id="log-list"><div class="empty"><span class="empty-icon">📋</span>No entries yet — describe your day above and tap Log it.</div></div>
+</div>
+
+<!-- ===== ORDERS ===== -->
+<div id="tab-orders" class="tab-panel">
+  <div class="card">
+    <div class="fg"><label class="fl" for="o-yard">Lumber yard name</label><input type="text" id="o-yard" placeholder="e.g. Hendricks Supply"/></div>
+    <div class="fg"><label class="fl" for="o-size">Order size / quantity</label><input type="text" id="o-size" placeholder="e.g. 40 units, $4,200, 3 pallets"/></div>
+    <div class="fg"><label class="fl" for="o-type">Order type</label>
+    <select id="o-type">
+      <option value="stock">📦 Stock order — yard buying to stock their yard</option>
+      <option value="customer">👤 Customer-driven — fulfilling existing customer order</option>
+    </select></div>
+    <div class="fg"><label class="fl" for="o-date">Order date</label><input type="date" id="o-date"/></div>
+    <div class="fg"><label class="fl" for="o-notes">Notes (optional)</label><textarea id="o-notes" style="min-height:55px;" placeholder="Delivery issues, follow-up, context…"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="addOrder()">+ Add order</button>
+  </div>
+  <div id="ord-stats" style="display:none">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sl">Total orders</div><div class="sv" id="os-total">0</div><div class="ss">logged</div></div>
+      <div class="stat-box"><div class="sl">Stock orders</div><div class="sv" id="os-stock">0</div><div class="ss">yard stocking</div></div>
+      <div class="stat-box"><div class="sl">Customer-driven</div><div class="sv" id="os-cust">0</div><div class="ss">fulfillment</div></div>
+    </div>
+    <div class="sec-hdr"><div class="sec-title">Order log</div><button class="btn btn-sm" onclick="exportOrders()">⬇ Export</button></div>
+  </div>
+  <div id="ord-list"><div class="empty"><span class="empty-icon">📦</span>No orders logged yet.</div></div>
+</div>
+
+<!-- ===== PITCHES ===== -->
+<div id="tab-pitches" class="tab-panel">
+  <div class="tip">🎯 <span>Track every yard you're pitching to stock product — the conversation, outcome, and follow-up needed.</span></div>
+  <div class="card">
+    <div class="fg"><label class="fl" for="p-yard">Lumber yard name</label><input type="text" id="p-yard" placeholder="e.g. Perez Brothers Lumber"/></div>
+    <div class="fg"><label class="fl" for="p-contact">Contact name (optional)</label><input type="text" id="p-contact" placeholder="e.g. Mike, the buyer"/></div>
+    <div class="fg"><label class="fl" for="p-date">Date of pitch</label><input type="date" id="p-date"/></div>
+    <div class="fg"><label class="fl" for="p-status">Status</label>
+    <select id="p-status">
+      <option value="pitched">📞 Pitched — waiting to hear back</option>
+      <option value="interested">✅ Interested — follow-up needed</option>
+      <option value="converted">🎉 Converted — placed a stock order</option>
+      <option value="not-interested">❌ Not interested</option>
+      <option value="follow-up">🔄 Follow-up scheduled</option>
+    </select></div>
+    <div class="fg"><label class="fl" for="p-notes">How did it go?</label><textarea id="p-notes" placeholder="e.g. Spoke with Mike — interested but wants pricing sheet. Said competitors already stocking. Call back Thursday."></textarea></div>
+    <div class="fg"><label class="fl" for="p-fu">Follow-up action (optional)</label><input type="text" id="p-fu" placeholder="e.g. Call back Thursday with pricing sheet"/></div>
+    <div class="fg"><label class="fl" for="p-fudate">Follow-up date (optional)</label><input type="date" id="p-fudate"/></div>
+    <button class="btn btn-primary btn-full" onclick="addPitch()">+ Log pitch</button>
+  </div>
+  <div id="pitch-stats" style="display:none">
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sl">Yards contacted</div><div class="sv" id="ps-total">0</div><div class="ss">total pitches</div></div>
+      <div class="stat-box"><div class="sl">Interested</div><div class="sv" id="ps-hot">0</div><div class="ss">warm leads</div></div>
+      <div class="stat-box"><div class="sl">Converted</div><div class="sv" id="ps-conv">0</div><div class="ss">stock orders won</div></div>
+    </div>
+    <div class="sec-hdr"><div class="sec-title">Pitch tracker</div><button class="btn btn-sm" onclick="exportPitches()">⬇ Export</button></div>
+  </div>
+  <div id="pitch-list"><div class="empty"><span class="empty-icon">🎯</span>No pitches logged yet.</div></div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard" class="tab-panel">
+  <div id="dash-empty" class="empty" style="margin-bottom:14px"><span class="empty-icon">📊</span>Add some log entries and orders to see your dashboard.</div>
+  <div id="dash-content" style="display:none">
+    <div class="chart-grid">
+      <div class="chart-card"><div class="chart-title">🔥 Fire-fighting hrs / week</div><div class="chart-wrap"><canvas id="chart-ff"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">📦 Orders over time</div><div class="chart-wrap"><canvas id="chart-orders"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">🎯 Pitch pipeline</div><div class="chart-wrap"><canvas id="chart-funnel"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">⚠ Accounts at risk / week</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOLLOW-UPS ===== -->
+<div id="tab-followups" class="tab-panel">
+  <div class="sec-hdr" style="margin-bottom:14px"><div class="sec-title">Pending follow-ups</div></div>
+  <div id="fu-list"><div class="empty"><span class="empty-icon">🔔</span>No follow-ups pending. Add a follow-up date when logging a pitch.</div></div>
+</div>
+
+<!-- ===== WEEKLY UPDATE ===== -->
+<div id="tab-update" class="tab-panel">
+  <div class="card">
+    <label class="fl">Pick the week for your manager update</label>
+    <div class="frow"><label>From</label><input type="date" id="w-start"/><label>To</label><input type="date" id="w-end"/></div>
+    <button class="btn btn-primary btn-full" id="upd-btn" onclick="generateUpdate()">✦ Generate update</button>
+    <div class="proc" id="upd-proc"><div class="spin"></div><span>Writing your update…</span></div>
+    <div class="err" id="upd-err"></div>
+  </div>
+  <div id="upd-chips" style="display:none;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:5px">Log entries found for this period</div>
+    <div id="chips-row"></div>
+  </div>
+  <div id="upd-out"></div>
+</div>
+
+<!-- ===== PROPOSAL ===== -->
+<div id="tab-proposal" class="tab-panel">
+  <div class="tip">📄 <span>One-page memo that makes your case to leadership — professionally, without sounding like a complaint. The more you've logged, the stronger it gets.</span></div>
+  <div class="card">
+    <div class="fg"><label class="fl" for="pr-ctx">Extra context? (optional)</label>
+    <textarea id="pr-ctx" style="min-height:60px;" placeholder="e.g. Product is ProLine X. Manager is Dave Chen. Biggest issue is wrong SKUs being shipped."></textarea></div>
+    <button class="btn btn-primary btn-full" id="prop-btn" onclick="generateProposal()">✦ Build proposal</button>
+    <div class="proc" id="prop-proc"><div class="spin"></div><span>Building your proposal…</span></div>
+    <div class="err" id="prop-err"></div>
+  </div>
+  <div id="prop-out"></div>
+</div>
+
+<!-- ===== BACKUPS ===== -->
+<div id="tab-backups" class="tab-panel">
+  <div class="tip">🗂 <span>Each day you log entries, a PDF snapshot is saved here automatically. Tap any day to download it.</span></div>
+  <div class="sec-hdr"><div class="sec-title">Daily PDF snapshots</div><button class="btn btn-sm" onclick="saveBackupNow()">📸 Save today now</button></div>
+  <div id="bk-list"><div class="empty"><span class="empty-icon">🗂</span>No backups yet — they appear here automatically after you log your first entry.</div></div>
+</div>
+
+</main>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+// ============ STORAGE ============
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return[]}}
+function loadObj(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+// ============ TABS ============
+let activeCharts={};
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='followups')renderFollowups();
+  if(id==='update')previewEntries();
+  if(id==='backups')renderBackups();
+}
+
+// ============ DATE HELPERS ============
+function tod(){return new Date().toISOString().split('T')[0]}
+function getMonday(d){const dt=new Date(d+'T12:00:00'),day=dt.getDay();dt.setDate(dt.getDate()-day+(day===0?-6:1));return dt.toISOString().split('T')[0]}
+function getFriday(d){const dt=new Date(d+'T12:00:00'),day=dt.getDay();dt.setDate(dt.getDate()-day+(day===0?-2:5));return dt.toISOString().split('T')[0]}
+function fmt(d,opts){return new Date(d+'T12:00:00').toLocaleDateString('en-US',opts||{weekday:'short',month:'short',day:'numeric'})}
+function getWeekLabel(d){const mon=getMonday(d);return fmt(mon,{month:'short',day:'numeric'})}
+
+// ============ CLAUDE API ============
+async function callClaude(prompt,errId){
+  const el=errId?document.getElementById(errId):null;
+  if(el)el.style.display='none';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok)throw new Error('API '+r.status);
+    const d=await r.json();
+    return d.content.map(b=>b.text||'').join('');
+  }catch(e){
+    if(el){el.textContent='Could not connect — check your internet and try again.';el.style.display='block';}
+    throw e;
+  }
+}
+
+// ============ SCOREBOARD ============
+function updateScoreboard(){
+  const entries=load('so_entries'),orders=load('so_orders'),pitches=load('so_pitches');
+  const totalFF=entries.reduce((s,e)=>s+(e.hours||0),0);
+  const riskCount=entries.filter(e=>e.at_risk&&!e.at_risk.toLowerCase().startsWith('none')).length;
+  document.getElementById('wb-days').textContent=entries.length;
+  document.getElementById('wb-orders').textContent=orders.length;
+  document.getElementById('wb-stock').textContent=orders.filter(o=>o.type==='stock').length;
+  document.getElementById('wb-conv').textContent=pitches.filter(p=>p.status==='converted').length;
+  document.getElementById('wb-ff').textContent=totalFF.toFixed(1);
+  document.getElementById('wb-risk').textContent=riskCount;
+}
+
+// ============ DAILY LOG ============
+document.getElementById('e-date').value=tod();
+
+async function submitEntry(){
+  const text=document.getElementById('e-text').value.trim();
+  const note=document.getElementById('e-note').value.trim();
+  const date=document.getElementById('e-date').value;
+  const hours=parseFloat(document.getElementById('e-ff').value)||0;
+  if(!text){document.getElementById('e-text').focus();return;}
+  const btn=document.getElementById('log-btn'),proc=document.getElementById('log-proc');
+  btn.disabled=true;proc.style.display='flex';
+  const isBackfill=date<tod();
+  try{
+    const raw=await callClaude(`You help a salesperson document their day to prove value to management despite operational failures (late deliveries, wrong orders, damaged goods) not their fault.\n\nReturn ONLY valid JSON, no preamble, no markdown:\n{"wins":"bullet list of sales wins or 'None'","firefighting":"bullet list of ops problems handled not the salesperson's fault or 'None'","at_risk":"bullet list of customers who may churn or 'None'","summary":"one sentence summary from a sales performance perspective"}\n\nEntry (${isBackfill?'backfilled':'today'}): "${text.replace(/"/g,"'")}"`, 'log-err');
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    let entries=load('so_entries');
+    entries.push({id:Date.now(),date,hours,raw:text,note,backfill:isBackfill,...parsed});
+    entries.sort((a,b)=>b.date.localeCompare(a.date));
+    save('so_entries',entries);
+    document.getElementById('e-text').value='';
+    document.getElementById('e-note').value='';
+    document.getElementById('e-ff').value='0';
+    document.getElementById('e-date').value=tod();
+    renderLog();updateScoreboard();checkAutoBackup();
+  }catch(e){}
+  btn.disabled=false;proc.style.display='none';
+}
+
+const statusLabels={pitched:'📞 Pitched',interested:'✅ Interested',converted:'🎉 Converted','not-interested':'❌ Not interested','follow-up':'🔄 Follow-up scheduled'};
+const statusPillClass={pitched:'p-info',interested:'p-good',converted:'p-good','not-interested':'p-warn','follow-up':'p-amber'};
+
+function renderLog(){
+  const entries=load('so_entries');
+  const totalFF=entries.reduce((s,e)=>s+(e.hours||0),0);
+  const riskCount=entries.filter(e=>e.at_risk&&!e.at_risk.toLowerCase().startsWith('none')).length;
+  const st=document.getElementById('log-stats');
+  if(entries.length>0){
+    st.style.display='block';
+    document.getElementById('ls-days').textContent=entries.length;
+    document.getElementById('ls-ff').textContent=totalFF.toFixed(1);
+    document.getElementById('ls-risk').textContent=riskCount;
+  }else st.style.display='none';
+  const list=document.getElementById('log-list');
+  if(!entries.length){list.innerHTML='<div class="empty"><span class="empty-icon">📋</span>No entries yet — describe your day above and tap Log it.</div>';return;}
+  list.innerHTML=entries.map(e=>{
+    const hasWin=e.wins&&!e.wins.toLowerCase().startsWith('none');
+    const hasFF=e.firefighting&&!e.firefighting.toLowerCase().startsWith('none');
+    const hasRisk=e.at_risk&&!e.at_risk.toLowerCase().startsWith('none');
+    return`<div class="entry">
+      <div class="emeta">${fmt(e.date)}${e.hours>0?` <span class="pill p-warn">🔥 ${e.hours}h</span>`:''} ${e.backfill?'<span class="pill p-info">backfilled</span>':''} ${hasWin?'<span class="pill p-good">✓ Win</span>':''} ${hasRisk?'<span class="pill p-amber">⚠ At risk</span>':''}</div>
+      <div class="esumm">${e.summary}</div>
+      ${hasWin?`<div class="esec"><div class="esec-l">Wins</div><div class="esec-b">${e.wins}</div></div>`:''}
+      ${hasFF?`<div class="esec"><div class="esec-l">Fire-fighting (not my fault)</div><div class="esec-b">${e.firefighting}</div></div>`:''}
+      ${hasRisk?`<div class="esec"><div class="esec-l">Customers at risk</div><div class="esec-b">${e.at_risk}</div></div>`:''}
+      ${e.note?`<div class="esec"><div class="esec-l">Notes to self</div><div class="esec-b" style="color:var(--text3)">${e.note}</div></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function exportLog(){
+  const entries=load('so_entries');
+  const totalFF=entries.reduce((s,e)=>s+(e.hours||0),0);
+  let out=`STEVE OAKES — SALES LOG\n${'='.repeat(40)}\nEntries: ${entries.length} | Fire-fighting hrs: ${totalFF.toFixed(1)}\n\n`;
+  entries.forEach(e=>{out+=`${fmt(e.date)} | ${e.hours}h fire-fighting\n${e.summary}\n${e.wins&&!e.wins.toLowerCase().startsWith('none')?'WINS: '+e.wins+'\n':''}${e.firefighting&&!e.firefighting.toLowerCase().startsWith('none')?'OPS ISSUES: '+e.firefighting+'\n':''}${e.at_risk&&!e.at_risk.toLowerCase().startsWith('none')?'AT RISK: '+e.at_risk+'\n':''}\n`;});
+  dl(out,`steve-log-${tod()}.txt`);
+}
+
+// ============ ORDERS ============
+document.getElementById('o-date').value=tod();
+
+function addOrder(){
+  const yard=document.getElementById('o-yard').value.trim();
+  const size=document.getElementById('o-size').value.trim();
+  if(!yard||!size){alert('Please enter a yard name and order size.');return;}
+  let orders=load('so_orders');
+  orders.unshift({id:Date.now(),yard,size,type:document.getElementById('o-type').value,date:document.getElementById('o-date').value,notes:document.getElementById('o-notes').value.trim()});
+  save('so_orders',orders);
+  document.getElementById('o-yard').value='';document.getElementById('o-size').value='';document.getElementById('o-notes').value='';document.getElementById('o-date').value=tod();
+  renderOrders();updateScoreboard();
+}
+
+function renderOrders(){
+  const orders=load('so_orders');
+  const st=document.getElementById('ord-stats');
+  if(orders.length>0){
+    st.style.display='block';
+    document.getElementById('os-total').textContent=orders.length;
+    document.getElementById('os-stock').textContent=orders.filter(o=>o.type==='stock').length;
+    document.getElementById('os-cust').textContent=orders.filter(o=>o.type==='customer').length;
+  }else st.style.display='none';
+  const list=document.getElementById('ord-list');
+  if(!orders.length){list.innerHTML='<div class="empty"><span class="empty-icon">📦</span>No orders logged yet.</div>';return;}
+  list.innerHTML=orders.map(o=>`<div class="entry">
+    <div class="emeta">${fmt(o.date)} ${o.type==='stock'?'<span class="pill p-purple">📦 Stock order</span>':'<span class="pill p-info">👤 Customer-driven</span>'}</div>
+    <div class="esumm"><strong>${o.yard}</strong> — ${o.size}</div>
+    ${o.notes?`<div class="esec"><div class="esec-l">Notes</div><div class="esec-b">${o.notes}</div></div>`:''}
+  </div>`).join('');
+}
+
+function exportOrders(){
+  const orders=load('so_orders');
+  let out=`STEVE OAKES — ORDER LOG\n${'='.repeat(40)}\nTotal: ${orders.length} | Stock: ${orders.filter(o=>o.type==='stock').length} | Customer: ${orders.filter(o=>o.type==='customer').length}\n\n`;
+  orders.forEach(o=>{out+=`${fmt(o.date)} | ${o.yard} | ${o.size} | ${o.type==='stock'?'STOCK ORDER':'CUSTOMER-DRIVEN'}${o.notes?'\nNotes: '+o.notes:''}\n\n`;});
+  dl(out,`steve-orders-${tod()}.txt`);
+}
+
+// ============ PITCHES ============
+document.getElementById('p-date').value=tod();
+
+function addPitch(){
+  const yard=document.getElementById('p-yard').value.trim();
+  if(!yard){alert('Please enter a yard name.');return;}
+  let pitches=load('so_pitches');
+  pitches.unshift({id:Date.now(),yard,contact:document.getElementById('p-contact').value.trim(),date:document.getElementById('p-date').value,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value.trim(),followup:document.getElementById('p-fu').value.trim(),fudate:document.getElementById('p-fudate').value});
+  save('so_pitches',pitches);
+  ['p-yard','p-contact','p-notes','p-fu','p-fudate'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-date').value=tod();document.getElementById('p-status').value='pitched';
+  renderPitches();updateScoreboard();
+}
+
+function renderPitches(){
+  const pitches=load('so_pitches');
+  const st=document.getElementById('pitch-stats');
+  if(pitches.length>0){
+    st.style.display='block';
+    document.getElementById('ps-total').textContent=pitches.length;
+    document.getElementById('ps-hot').textContent=pitches.filter(p=>p.status==='interested'||p.status==='follow-up').length;
+    document.getElementById('ps-conv').textContent=pitches.filter(p=>p.status==='converted').length;
+  }else st.style.display='none';
+  const list=document.getElementById('pitch-list');
+  if(!pitches.length){list.innerHTML='<div class="empty"><span class="empty-icon">🎯</span>No pitches logged yet.</div>';return;}
+  list.innerHTML=pitches.map(p=>`<div class="entry">
+    <div class="emeta"><span class="pill ${statusPillClass[p.status]||'p-info'}">${statusLabels[p.status]||p.status}</span> ${fmt(p.date)}</div>
+    <div class="esumm"><strong>${p.yard}</strong>${p.contact?' — '+p.contact:''}</div>
+    ${p.notes?`<div class="esec"><div class="esec-l">Notes</div><div class="esec-b">${p.notes}</div></div>`:''}
+    ${p.followup?`<div class="esec"><div class="esec-l">Follow-up${p.fudate?' · '+fmt(p.fudate):''}</div><div class="esec-b" style="color:var(--accent)">→ ${p.followup}</div></div>`:''}
+  </div>`).join('');
+}
+
+function exportPitches(){
+  const pitches=load('so_pitches');
+  let out=`STEVE OAKES — PITCH TRACKER\n${'='.repeat(40)}\nTotal: ${pitches.length} | Converted: ${pitches.filter(p=>p.status==='converted').length}\n\n`;
+  pitches.forEach(p=>{out+=`${fmt(p.date)} | ${p.yard}${p.contact?' ('+p.contact+')':''} | ${statusLabels[p.status]||p.status}\n${p.notes?'Notes: '+p.notes+'\n':''}${p.followup?'Follow-up: '+p.followup+(p.fudate?' by '+fmt(p.fudate):'')+'\n':''}\n`;});
+  dl(out,`steve-pitches-${tod()}.txt`);
+}
+
+// ============ FOLLOW-UPS ============
+function renderFollowups(){
+  const pitches=load('so_pitches');
+  const today=tod();
+  const pending=pitches.filter(p=>p.followup&&p.status!=='converted'&&p.status!=='not-interested').sort((a,b)=>{
+    if(!a.fudate&&!b.fudate)return 0;if(!a.fudate)return 1;if(!b.fudate)return -1;return a.fudate.localeCompare(b.fudate);
+  });
+  const list=document.getElementById('fu-list');
+  if(!pending.length){list.innerHTML='<div class="empty"><span class="empty-icon">🔔</span>No follow-ups pending.</div>';return;}
+  list.innerHTML=pending.map(p=>{
+    const overdue=p.fudate&&p.fudate<today;
+    return`<div class="fu-item">
+      <div class="fu-dot${overdue?' overdue':''}"></div>
+      <div class="fu-content">
+        <div class="fu-yard">${p.yard}${p.contact?' — '+p.contact:''}</div>
+        <div class="fu-action">${p.followup}</div>
+        <div class="fu-date">${p.fudate?`${overdue?'⚠ Overdue — ':''} Due ${fmt(p.fudate)}`:'No date set'} · <span class="pill ${statusPillClass[p.status]||'p-info'}" style="font-size:10px">${statusLabels[p.status]||p.status}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ DASHBOARD ============
+function renderDashboard(){
+  const entries=load('so_entries'),orders=load('so_orders'),pitches=load('so_pitches');
+  const empty=document.getElementById('dash-empty'),content=document.getElementById('dash-content');
+  if(!entries.length&&!orders.length){empty.style.display='block';content.style.display='none';return;}
+  empty.style.display='none';content.style.display='block';
+
+  // Destroy old charts
+  Object.values(activeCharts).forEach(c=>{try{c.destroy()}catch(e){}});
+  activeCharts={};
+
+  // Group entries by week
+  const weekMap={};
+  entries.forEach(e=>{
+    const wk=getWeekLabel(e.date);
+    if(!weekMap[wk])weekMap[wk]={ff:0,risk:0};
+    weekMap[wk].ff+=e.hours||0;
+    if(e.at_risk&&!e.at_risk.toLowerCase().startsWith('none'))weekMap[wk].risk++;
+  });
+  const weeks=Object.keys(weekMap).sort();
+
+  // FF chart
+  activeCharts.ff=new Chart(document.getElementById('chart-ff'),{type:'bar',data:{labels:weeks,datasets:[{label:'Hrs',data:weeks.map(w=>weekMap[w].ff),backgroundColor:'#FAECE7',borderColor:'#993C1D',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}});
+
+  // Orders chart
+  const ordWeekMap={};
+  orders.forEach(o=>{const wk=getWeekLabel(o.date);if(!ordWeekMap[wk])ordWeekMap[wk]={stock:0,customer:0};ordWeekMap[wk][o.type]++;});
+  const ordWeeks=Object.keys(ordWeekMap).sort();
+  activeCharts.orders=new Chart(document.getElementById('chart-orders'),{type:'bar',data:{labels:ordWeeks,datasets:[{label:'Stock',data:ordWeeks.map(w=>ordWeekMap[w].stock),backgroundColor:'#F0EAF9',borderColor:'#5B2D8E',borderWidth:1.5,borderRadius:4},{label:'Customer',data:ordWeeks.map(w=>ordWeekMap[w].customer),backgroundColor:'#EBF2FB',borderColor:'#1D5FA8',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}}}});
+
+  // Funnel chart
+  const pCount={pitched:0,interested:0,'follow-up':0,converted:0,'not-interested':0};
+  pitches.forEach(p=>{if(pCount[p.status]!==undefined)pCount[p.status]++;});
+  activeCharts.funnel=new Chart(document.getElementById('chart-funnel'),{type:'doughnut',data:{labels:['Pitched','Interested','Follow-up','Converted','Not interested'],datasets:[{data:[pCount.pitched,pCount.interested,pCount['follow-up'],pCount.converted,pCount['not-interested']],backgroundColor:['#EBF2FB','#EAF3DE','#FAEEDA','#3B6D11','#FAECE7'],borderColor:['#1D5FA8','#3B6D11','#854F0B','#2a5209','#993C1D'],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}}}});
+
+  // Risk chart
+  activeCharts.risk=new Chart(document.getElementById('chart-risk'),{type:'line',data:{labels:weeks,datasets:[{label:'At risk',data:weeks.map(w=>weekMap[w].risk),borderColor:'#993C1D',backgroundColor:'rgba(153,60,29,0.08)',borderWidth:2,pointRadius:3,fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'},ticks:{stepSize:1}},x:{grid:{display:false}}}}});
+}
+
+// ============ WEEKLY UPDATE ============
+document.getElementById('w-start').value=getMonday(tod());
+document.getElementById('w-end').value=getFriday(tod());
+document.getElementById('w-start').addEventListener('change',previewEntries);
+document.getElementById('w-end').addEventListener('change',previewEntries);
+
+function getWeekEntries(){
+  const s=document.getElementById('w-start').value,e=document.getElementById('w-end').value;
+  return load('so_entries').filter(x=>x.date>=s&&x.date<=e).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function previewEntries(){
+  const entries=getWeekEntries();
+  const div=document.getElementById('upd-chips');
+  if(!entries.length){div.style.display='none';return;}
+  div.style.display='block';
+  document.getElementById('chips-row').innerHTML=entries.map(e=>`<span style="display:inline-block;font-size:12px;background:var(--surface2);color:var(--text2);border-radius:var(--radius-sm);padding:3px 8px;margin:2px">${fmt(e.date,{weekday:'short',month:'short',day:'numeric'})}</span>`).join('');
+}
+
+async function generateUpdate(){
+  const entries=getWeekEntries();
+  const out=document.getElementById('upd-out');
+  if(!entries.length){out.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No log entries found. Add entries in the Daily Log tab first.</div>';return;}
+  const btn=document.getElementById('upd-btn'),proc=document.getElementById('upd-proc');
+  btn.disabled=true;proc.style.display='flex';out.innerHTML='';
+  const s=document.getElementById('w-start').value,e=document.getElementById('w-end').value;
+  const totalHours=entries.reduce((sum,e)=>sum+(e.hours||0),0);
+  const startLabel=fmt(s,{month:'short',day:'numeric'}),endLabel=fmt(e,{month:'short',day:'numeric'});
+  const riskCount=entries.filter(e=>e.at_risk&&!e.at_risk.toLowerCase().startsWith('none')).length;
+  const weekOrders=load('so_orders').filter(o=>o.date>=s&&o.date<=e);
+  const weekPitches=load('so_pitches').filter(p=>p.date>=s&&p.date<=e);
+  const digest=entries.map(x=>`${fmt(x.date,{weekday:'short',month:'short',day:'numeric'})}:\n- Summary: ${x.summary}\n- Wins: ${x.wins}\n- Fire-fighting: ${x.firefighting}\n- At risk: ${x.at_risk}`).join('\n\n');
+  const ordDigest=weekOrders.length?weekOrders.map(o=>`${o.yard}: ${o.size} (${o.type==='stock'?'STOCK':'customer-driven'})`).join(', '):'None this week';
+  const pitchDigest=weekPitches.length?weekPitches.map(p=>`${p.yard}: ${statusLabels[p.status]||p.status}`).join(', '):'None this week';
+  try{
+    const raw=await callClaude(`Write a weekly manager update for Steve Oakes, salesperson generating strong distributor orders despite operational failures (late deliveries, wrong orders, damaged goods) NOT his fault. He also actively pitches lumber yards to place stock orders without waiting for end-customer demand.\n\nTone: direct, confident, solution-oriented. Business partner, not just a rep.\n\nReturn ONLY valid JSON, no preamble, no markdown:\n{"subject":"email subject","opening":"1-2 confident sentences","wins":"• bullet list of wins","firefighting":"• bullet list of non-sales time with hours","orders":"brief order summary including stock orders","pitches":"brief pitch activity summary","at_risk":"• accounts at risk with suggested action, or 'No accounts flagged.'","ask":"1-2 sentences — what Steve needs from leadership","closing":"one confident closing sentence"}\n\nPeriod: ${startLabel}–${endLabel} | FF hrs: ${totalHours.toFixed(1)} | Days: ${entries.length} | At risk: ${riskCount}\nOrders: ${ordDigest}\nPitches: ${pitchDigest}\n\nLog:\n${digest}`,'upd-err');
+    const p=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    window._lastUpdate=p;window._lastUpdateMeta={startLabel,endLabel,totalHours,riskCount,entries};
+    out.innerHTML=`
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sl">Days</div><div class="sv">${entries.length}</div><div class="ss">${startLabel}–${endLabel}</div></div>
+        <div class="stat-box"><div class="sl">FF hrs</div><div class="sv">${totalHours.toFixed(1)}</div><div class="ss">not selling</div></div>
+        <div class="stat-box"><div class="sl">At risk</div><div class="sv">${riskCount}</div><div class="ss">accounts</div></div>
+      </div>
+      <div class="card">
+        <div class="u-subj">${p.subject}</div>
+        <div class="u-sec"><div class="u-body">${p.opening}</div></div>
+        <hr class="div">
+        <div class="u-sec"><div class="u-lbl"><span class="pill p-good">✓ Wins</span></div><div class="u-body">${p.wins}</div></div>
+        <hr class="div">
+        <div class="u-sec"><div class="u-lbl"><span class="pill p-purple">📦 Orders & pitches</span></div><div class="u-body">${p.orders}\n\n${p.pitches}</div></div>
+        <hr class="div">
+        <div class="u-sec"><div class="u-lbl"><span class="pill p-warn">🔥 Non-sales time — ${totalHours.toFixed(1)} hrs</span></div><div class="u-body">${p.firefighting}</div></div>
+        <hr class="div">
+        <div class="u-sec"><div class="u-lbl"><span class="pill p-amber">⚠ Accounts to watch</span></div><div class="u-body">${p.at_risk}</div></div>
+        <hr class="div">
+        <div class="u-sec"><div class="u-lbl"><span class="pill p-info">What I need from leadership</span></div><div class="u-body">${p.ask}</div></div>
+        <hr class="div">
+        <div class="u-body" style="color:var(--text2)">${p.closing}</div>
+        <div class="act-row">
+          <button class="btn btn-sm" onclick="copyUpdate()">📋 Copy</button>
+          <button class="btn btn-sm" onclick="exportUpdate()">⬇ Download</button>
+          <button class="btn btn-sm" onclick="printUpdate()">🖨 Print</button>
+        </div>
+      </div>`;
+  }catch(e){}
+  btn.disabled=false;proc.style.display='none';
+}
+
+function buildUpdateText(){
+  const p=window._lastUpdate,m=window._lastUpdateMeta;
+  if(!p)return'';
+  return`WEEKLY UPDATE — ${m.startLabel}–${m.endLabel}\n${'='.repeat(45)}\nSubject: ${p.subject}\n\n${p.opening}\n\nWINS\n${p.wins}\n\nORDERS & PITCHES\n${p.orders}\n${p.pitches}\n\nNON-SALES TIME (${m.totalHours.toFixed(1)} hrs)\n${p.firefighting}\n\nACCOUNTS TO WATCH\n${p.at_risk}\n\nWHAT I NEED FROM LEADERSHIP\n${p.ask}\n\n${p.closing}`;
+}
+function copyUpdate(){navigator.clipboard.writeText(buildUpdateText()).then(()=>{const b=event.target.closest('button'),o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);})}
+function exportUpdate(){const m=window._lastUpdateMeta;dl(buildUpdateText(),`weekly-update-${m.startLabel.replace(' ','-')}.txt`);}
+function printUpdate(){window.print();}
+
+// ============ PROPOSAL ============
+async function generateProposal(){
+  const entries=load('so_entries'),orders=load('so_orders'),pitches=load('so_pitches');
+  const ctx=document.getElementById('pr-ctx').value.trim();
+  const out=document.getElementById('prop-out');
+  if(!entries.length&&!orders.length){out.innerHTML='<div class="empty"><span class="empty-icon">📄</span>Add some log entries or orders first.</div>';return;}
+  const btn=document.getElementById('prop-btn'),proc=document.getElementById('prop-proc');
+  btn.disabled=true;proc.style.display='flex';out.innerHTML='';
+  const totalFF=entries.reduce((s,e)=>s+(e.hours||0),0);
+  const riskCount=entries.filter(e=>e.at_risk&&!e.at_risk.toLowerCase().startsWith('none')).length;
+  const stockOrders=orders.filter(o=>o.type==='stock').length;
+  const convPitches=pitches.filter(p=>p.status==='converted').length;
+  const hotPitches=pitches.filter(p=>p.status==='interested'||p.status==='follow-up').length;
+  const winEntries=entries.filter(e=>e.wins&&!e.wins.toLowerCase().startsWith('none'));
+  const allFF=entries.filter(e=>e.firefighting&&!e.firefighting.toLowerCase().startsWith('none'));
+  const dateRange=entries.length>1?`${fmt(entries[entries.length-1].date,{month:'short',day:'numeric'})} – ${fmt(entries[0].date,{month:'short',day:'numeric'})}`:entries.length===1?fmt(entries[0].date,{month:'long',day:'numeric'}):tod();
+  try{
+    const raw=await callClaude(`Write a one-page management proposal for Steve Oakes. He has built distributor demand and is pitching lumber yards to stock product proactively, but operational failures (late deliveries, wrong orders, damaged goods, supply shortages) cost the company customers and consume his selling time.\n\nTone: professional, solution-focused, confident — not a complaint.\n\n${ctx?'Context: '+ctx:''}\n\nData:\n- Period: ${dateRange} | Days logged: ${entries.length}\n- Fire-fighting hrs: ${totalFF.toFixed(1)} | Accounts at risk: ${riskCount}\n- Orders: ${orders.length} total, ${stockOrders} stock orders\n- Yards pitched: ${pitches.length}, converted: ${convPitches}, warm: ${hotPitches}\n- Sample wins: ${winEntries.slice(0,3).map(e=>e.wins).join(' | ')||'See log'}\n- Sample ops issues: ${allFF.slice(0,3).map(e=>e.firefighting).join(' | ')||'See log'}\n\nPlain text memo, no markdown:\n\nMEMO\nTo: [Sales Leadership]\nFrom: Steve Oakes\nRe: Sales Performance & Operational Alignment — [date range]\n\nSITUATION\n[2-3 sentences: Steve has built demand and is growing stocking pipeline. Bottleneck is operational, not sales.]\n\nWHAT I HAVE DELIVERED\n[Bullet list from real data. Confident, factual.]\n\nWHERE TIME IS BEING LOST\n[Bullet list of ops issues outside Steve's role. Feature the ${totalFF.toFixed(1)} hours as a business cost.]\n\nACCOUNTS AT RISK\n[Business risk if ops issues continue.]\n\nWHAT I AM ASKING FOR\n[3-4 specific, reasonable asks.]\n\nBOTTOM LINE\n[1-2 sentences. Steve is committed and performing. These fixes unlock more growth.]`,'prop-err');
+    window._lastProposal=raw.replace(/```/g,'').trim();
+    out.innerHTML=`<div class="card"><div style="font-size:12px;color:var(--text3);margin-bottom:10px">Generated ${fmt(tod(),{month:'long',day:'numeric',year:'numeric'})}</div><div class="prop-out">${window._lastProposal}</div><div class="act-row"><button class="btn btn-sm" onclick="copyProposal()">📋 Copy</button><button class="btn btn-sm" onclick="exportProposal()">⬇ Download</button><button class="btn btn-sm" onclick="exportProposalPDF()">📄 Save as PDF</button></div></div>`;
+  }catch(e){}
+  btn.disabled=false;proc.style.display='none';
+}
+function copyProposal(){navigator.clipboard.writeText(window._lastProposal||'').then(()=>{const b=event.target.closest('button'),o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);})}
+function exportProposal(){dl(window._lastProposal||'',`steve-proposal-${tod()}.txt`);}
+function exportProposalPDF(){
+  if(!window._lastProposal)return;
+  const doc=new jsPDF();
+  const lines=doc.splitTextToSize(window._lastProposal,180);
+  let y=20;
+  doc.setFontSize(11);
+  lines.forEach(line=>{if(y>270){doc.addPage();y=20;}doc.text(line,15,y);y+=6;});
+  doc.save(`steve-proposal-${tod()}.pdf`);
+}
+
+// ============ BACKUPS ============
+function buildDayPDF(date){
+  const entries=load('so_entries').filter(e=>e.date===date);
+  const orders=load('so_orders').filter(o=>o.date===date);
+  const pitches=load('so_pitches').filter(p=>p.date===date);
+  const doc=new jsPDF();
+  doc.setFontSize(14);doc.setFont(undefined,'bold');
+  doc.text(`Steve Oakes — Daily Snapshot`,15,18);
+  doc.setFontSize(10);doc.setFont(undefined,'normal');
+  doc.text(fmt(date,{weekday:'long',month:'long',day:'numeric',year:'numeric'}),15,25);
+  let y=35;
+  const addSection=(title,lines)=>{
+    if(!lines.length)return;
+    if(y>255){doc.addPage();y=20;}
+    doc.setFont(undefined,'bold');doc.text(title,15,y);y+=6;
+    doc.setFont(undefined,'normal');
+    lines.forEach(l=>{const wrapped=doc.splitTextToSize(l,175);wrapped.forEach(wl=>{if(y>270){doc.addPage();y=20;}doc.text(wl,15,y);y+=5.5;});y+=1;});
+    y+=4;
+  };
+  if(entries.length){
+    addSection('DAILY LOG',[]);
+    entries.forEach(e=>{
+      addSection(`  Summary:`, [e.summary]);
+      if(e.wins&&!e.wins.toLowerCase().startsWith('none'))addSection('  Wins:',[e.wins]);
+      if(e.firefighting&&!e.firefighting.toLowerCase().startsWith('none'))addSection('  Fire-fighting:',[e.firefighting]);
+      if(e.at_risk&&!e.at_risk.toLowerCase().startsWith('none'))addSection('  At risk:',[e.at_risk]);
+      if(e.hours>0)addSection('  Hours fire-fighting:',[`${e.hours} hrs`]);
+    });
+  }
+  if(orders.length)addSection('ORDERS',orders.map(o=>`${o.yard} — ${o.size} (${o.type==='stock'?'Stock order':'Customer-driven'})`));
+  if(pitches.length)addSection('PITCHES',pitches.map(p=>`${p.yard}${p.contact?' ('+p.contact+')':''}: ${statusLabels[p.status]||p.status}${p.followup?' → '+p.followup:''}`));
+  return doc;
+}
+
+function checkAutoBackup(){
+  const today=tod();
+  const backups=loadObj('so_backups',{});
+  if(backups[today])return; // already backed up today
+  const entries=load('so_entries').filter(e=>e.date===today);
+  if(!entries.length)return;
+  backups[today]={date:today,entries:entries.length,created:new Date().toISOString()};
+  save('so_backups',backups);
+  renderBackups();
+}
+
+function saveBackupNow(){
+  const today=tod();
+  const backups=loadObj('so_backups',{});
+  const entries=load('so_entries').filter(e=>e.date===today);
+  backups[today]={date:today,entries:entries.length,created:new Date().toISOString()};
+  save('so_backups',backups);
+  renderBackups();
+  switchTab('backups',document.querySelector('[onclick="switchTab(\'backups\',this)"]'));
+}
+
+function renderBackups(){
+  const backups=loadObj('so_backups',{});
+  const list=document.getElementById('bk-list');
+  const keys=Object.keys(backups).sort().reverse();
+  if(!keys.length){list.innerHTML='<div class="empty"><span class="empty-icon">🗂</span>No backups yet — they appear here automatically after you log entries.</div>';return;}
+  list.innerHTML=keys.map(k=>{
+    const b=backups[k];
+    return`<div class="bk-item">
+      <div><div class="bk-date">${fmt(b.date,{weekday:'short',month:'long',day:'numeric',year:'numeric'})}</div><div class="bk-meta">${b.entries} log entr${b.entries===1?'y':'ies'}</div></div>
+      <div class="bk-actions"><button class="btn btn-sm" onclick="downloadBackupPDF('${b.date}')">📄 Download PDF</button></div>
+    </div>`;
+  }).join('');
+}
+
+function downloadBackupPDF(date){
+  const doc=buildDayPDF(date);
+  doc.save(`steve-log-${date}.pdf`);
+}
+
+// ============ UTILS ============
+function dl(text,filename){
+  const blob=new Blob([text],{type:'text/plain'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
+
+// ============ INIT ============
+renderLog();renderOrders();renderPitches();previewEntries();renderBackups();updateScoreboard();checkAutoBackup();
+</script>
+</body>
+</html>
